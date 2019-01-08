@@ -1,5 +1,9 @@
 #!/bin/sh -eu
 
+dbpath=$(snapctl get dbpath)
+logpath=$(snapctl get logpath)
+args=$(snapctl get args)
+
 # Should we actually split out db and logs? I don't think thats needed anymore.
 args_file=${SNAP_COMMON}/mongoargs
 echo "--dbpath=${dbpath:-"${SNAP_COMMON}/db"}" > ${args_file}

@@ -1,3 +1,0 @@
-# Don't think I need this, just use configure hook to create the file.
---dbpath $SNAP_COMMON/db
---logpath $SNAP_COMMON/logs

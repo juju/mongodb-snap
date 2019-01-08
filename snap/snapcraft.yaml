@@ -1,10 +1,9 @@
-name: mongodb36
+name: juju-db
 base: core18
 version: '3.6'
-summary: Mongodb object/document oriented database
+summary: Mongodb object/document oriented database used internally by Juju
 description: |
-  Mongodb object/document oriented database
-
+  Mongodb object/document oriented database used internally by Juju
 grade: devel
 confinement: devmode
 
@@ -12,8 +11,6 @@ parts:
   wrappers:
     plugin: dump
     source: snap/local/
-    # organize:
-    #   commands/: commands/
 
   mongo:
     plugin: dump
@@ -22,8 +19,17 @@ parts:
     prime:
       - bin/*
       - -bin/install_compass
+      - -bin/bsondump
+      - -bin/mongodump
+      - -bin/mongoexport
+      - -bin/mongofiles
+      - -bin/mongoimport
+      - -bin/mongoperf
+      - -bin/mongoreplay
+      - -bin/mongorestore
+      - -bin/mongostat
+      - -bin/mongotop
 
-# Add tools here too (incl. in tarball) or sep. snap?)
 apps:
   mongod:
     command: mongod
@@ -32,8 +38,6 @@ apps:
 
   daemon:
     command: commands/daemon.start
-    reload-command: commands/daemon.reload
-    stop-command: commands/daemon.stop
     stop-timeout: 600s
     restart-condition: on-failure
     daemon: simple
