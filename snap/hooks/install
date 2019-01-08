@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# if [ ! -f ${SNAP_COMMON}/mongodb.conf ]; then
+#     echo "Copying config."
+#     cp ${SNAP}/snap/local/mongodb.conf ${SNAP_COMMON}/
+# fi
+
+
+# Create default dirs used in the default args file.
+mkdir ${SNAP_COMMON}/db
+mkdir ${SNAP_COMMON}/logs
+
+cp ${SNAP}/snap/local/mongoargs ${SNAP_COMMON}/

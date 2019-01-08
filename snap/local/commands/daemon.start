@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+# Do we want to split out the dbpath and log path and include them separately? (i.e. use a snap config setting)
+args_file=$SNAP_COMMON/mongoargs
+
+# $SNAP $(< $args_file)
+
+# cribbed from microk8s snap config, resolves env vars.
+declare -a args="($(cat $args_file))"
+exec "$SNAP/bin/mongod" "${args[@]}"

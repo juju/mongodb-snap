@@ -1,0 +1,2 @@
+--dbpath $SNAP_COMMON/db
+--logpath $SNAP_COMMON/logs
