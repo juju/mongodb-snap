@@ -1,9 +1,9 @@
 name: juju-db
 base: core18
 version: '3.6'
-summary: Mongodb object/document oriented database used internally by Juju
+summary: Mongodb object/document oriented database used internally by Juju.
 description: |
-  Mongodb object/document oriented database used internally by Juju
+  Mongodb object/document oriented database used internally by Juju.
 grade: devel
 confinement: devmode
 
@@ -20,22 +20,13 @@ parts:
       - bin/*
       - -bin/install_compass
       - -bin/bsondump
-      - -bin/mongodump
       - -bin/mongoexport
       - -bin/mongofiles
       - -bin/mongoimport
       - -bin/mongoperf
       - -bin/mongoreplay
-      - -bin/mongorestore
-      - -bin/mongostat
-      - -bin/mongotop
 
 apps:
-  mongod:
-    command: mongod
-    plugs:
-      - network
-
   daemon:
     command: commands/daemon.start
     stop-timeout: 600s
@@ -43,6 +34,11 @@ apps:
     daemon: simple
     plugs:
       - network-bind
+
+  mongod:
+    command: mongod
+    plugs:
+      - network
 
   mongos:
     command: mongos
@@ -54,3 +50,22 @@ apps:
     plugs:
       - network
 
+  mongodump:
+    command: mongodump
+    plugs:
+      - network
+
+  mongorestore:
+    command: mongorestore
+    plugs:
+      - network
+  
+  mongostat:
+    command: mongostat
+    plugs:
+      - network
+
+  mongotop:
+    command: mongotop
+    plugs:
+      - network

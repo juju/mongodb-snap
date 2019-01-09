@@ -4,3 +4,6 @@
 mkdir ${SNAP_COMMON}/db
 mkdir ${SNAP_COMMON}/logs
 touch ${SNAP_COMMON}/logs/mongo.log
+
+# Don't autostart the daemon
+snapctl stop --disable juju-db
