@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-# Do we want to split out the dbpath and log path and include them separately? (i.e. use a snap config setting)
-args_file=$SNAP_COMMON/mongoargs
+config_path=$(snapctl get configpath)
 
-# cribbed from microk8s snap config, resolves env vars within the config file.
-# we could also just use "$(snapctl get args)" (assuming we converge dbpath and logpath there too.)
-declare -a args="($(cat $args_file))"
-exec "$SNAP/bin/mongod" "${args[@]}"
+if [ ! -f "${config_path}" ]; then
+   echo "error: file configpath ${config_path} does not exist."
+   exit 1
+fi
+
+exec "$SNAP/bin/mongod" --config ${config_path}

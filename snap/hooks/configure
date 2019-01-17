@@ -1,27 +1,9 @@
 #!/bin/sh -eu
 
-dbpath=$(snapctl get dbpath)
-logpath=$(snapctl get logpath)
-args=$(snapctl get args)
+config_path=$(snapctl get configpath)
 
-dbpath=${dbpath:-"${SNAP_COMMON}/db"}
-logpath=${logpath:-"${SNAP_COMMON}/logs/mongo.log"}
-args=${args:-""}
-
-if [ ! -d "${dbpath}" ]; then
-   echo "error: directory dbpath ${dbpath} does not exist."
-   exit 1
+if [ ! -f "${config_path}" ]; then
+   echo "warning: file configpath ${config_path} does not exist. The daemon will fail to start unless created."
 fi
-
-if [ ! -f "${logpath}" ]; then
-   echo "error: file logpath ${logpath} does not exist."
-   exit 1
-fi
-
-# Should we actually split out db and logs? I don't think thats needed anymore.
-args_file=${SNAP_COMMON}/mongoargs
-echo "--dbpath=${dbpath}" > ${args_file}
-echo "--logpath=${logpath}" >> ${args_file}
-echo "${args}" >> ${args_file}
 
 exit 0

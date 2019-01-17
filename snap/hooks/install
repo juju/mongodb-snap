@@ -1,9 +1,20 @@
 #!/bin/bash
 
+default_config_src=${SNAP}/snap/local/default.conf
+default_config_path=${SNAP_COMMON}/default.config
+
 # Create default dirs used in the default args file.
 mkdir ${SNAP_COMMON}/db
 mkdir ${SNAP_COMMON}/logs
 touch ${SNAP_COMMON}/logs/mongo.log
 
+if [ ! -f ${default_config_path} ]; then
+    echo "Copying default config file to ${default_config_path}."
+    cp ${default_config_src} ${default_config_path}
+fi
+
 # Don't autostart the daemon
-snapctl stop --disable juju-db
+snapctl stop --disable ${SNAP_NAME}
+
+# Default config (also makes configpath visible to snap get. . .)
+snapctl set configpath=${default_config_path}
