@@ -1,12 +1,12 @@
 #!/bin/bash
 
-default_config_src=${SNAP}/snap/local/default.conf
+default_config_src=${SNAP}/default.conf
 default_config_path=${SNAP_COMMON}/default.config
 
 # Create default dirs used in the default args file.
 mkdir ${SNAP_COMMON}/db
 mkdir ${SNAP_COMMON}/logs
-touch ${SNAP_COMMON}/logs/mongo.log
+touch ${SNAP_COMMON}/logs/mongodb.log
 
 if [ ! -f ${default_config_path} ]; then
     echo "Copying default config file to ${default_config_path}."

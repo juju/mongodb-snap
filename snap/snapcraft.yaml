@@ -1,33 +1,16 @@
 name: juju-db
-base: core18
-version: '3.6'
+version: '4.0.5'
 summary: Mongodb object/document oriented database used internally by Juju.
 description: |
   Mongodb object/document oriented database used internally by Juju.
-grade: devel
 confinement: devmode
-
-parts:
-  wrappers:
-    plugin: dump
-    source: snap/local/
-
-  mongo:
-    plugin: dump
-    source: https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.6.9.tgz
-    source-type: tar
-    prime:
-      - bin/*
-      - -bin/install_compass
-      - -bin/bsondump
-      - -bin/mongoexport
-      - -bin/mongofiles
-      - -bin/mongoimport
-      - -bin/mongoperf
-      - -bin/mongoreplay
+grade: devel
+base: core18 
 
 apps:
   daemon:
+    environment:
+      LD_LIBRARY_PATH: "${LD_LIBRARY_PATH:-}:${SNAP_CURRENT}/lib:${SNAP_CURRENT}/lib/${ARCH}"
     command: commands/daemon.start
     stop-timeout: 600s
     restart-condition: on-failure
@@ -36,20 +19,27 @@ apps:
       - network-bind
 
   mongod:
+    environment:
+      LD_LIBRARY_PATH: "${LD_LIBRARY_PATH:-}:${SNAP_CURRENT}/lib:${SNAP_CURRENT}/lib/${ARCH}"
     command: mongod
     plugs:
       - network
-
+      
   mongos:
+    environment:
+      LD_LIBRARY_PATH: "${LD_LIBRARY_PATH:-}:${SNAP_CURRENT}/lib:${SNAP_CURRENT}/lib/${ARCH}"
     command: mongos
     plugs:
       - network
 
   mongo:
+    environment:
+      LD_LIBRARY_PATH: "${LD_LIBRARY_PATH:-}:${SNAP_CURRENT}/lib:${SNAP_CURRENT}/lib/${ARCH}"
     command: mongo
     plugs:
       - network
 
+  # Tools
   mongodump:
     command: mongodump
     plugs:
@@ -59,7 +49,7 @@ apps:
     command: mongorestore
     plugs:
       - network
-  
+
   mongostat:
     command: mongostat
     plugs:
@@ -69,3 +59,154 @@ apps:
     command: mongotop
     plugs:
       - network
+
+parts:
+  wrappers:
+    plugin: dump
+    source: snap/local/
+
+  mongo-tools:
+    source: https://github.com/mongodb/mongo-tools
+    source-type: git
+    source-tag: "r4.0.5"        # todo: which 4.x tag do we want?
+    plugin: go
+    build-packages:
+      - gcc
+      - pkg-config
+      - libssl-dev
+      - libsasl2-dev
+      - libpcap-dev
+    stage-packages:
+      - libsasl2-dev
+    organize:
+      usr/lib/: lib/
+    prime:
+      - lib/*/libsasl2.so.*
+      - bin/*
+    go-channel: 1.11/stable
+    go-importpath: github.com/mongodb/mongo-tools
+    override-build: |
+      mongo_tools="mongodump mongorestore mongotop mongostat"
+      export GOPATH=$(realpath ../go)
+      mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
+      # TODO: maybe set ldflags as per the build script.
+      for tool in ${mongo_tools}; do
+          go build -v -tags="ssl sasl" -o $GOPATH/bin/$tool github.com/mongodb/mongo-tools/$tool/main
+          mv $GOPATH/bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
+      done
+
+  mongo-libs:
+    after:
+      - mongo-tools
+    source: snap/local/empty
+    plugin: nil
+    organize:
+      usr/lib/: lib/
+    stage-packages:
+      - libssl-dev
+      - libcurl-dev
+      - libcurl4-openssl-dev
+      - python-cheetah
+      - python-pkg-resources
+      - python-pymongo
+      - python-typing
+      - python-yaml
+      - libstemmer-dev
+      - zlib1g-dev
+      - libsnappy-dev
+      - libyaml-cpp-dev
+      - libpcre3-dev
+      - libboost-iostreams-dev
+      - build-essential
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
+      - libboost-system-dev
+      - libboost-thread-dev
+      - valgrind
+    prime:
+      - lib/*/libasn1.so.*
+      - lib/*/libboost_filesystem.so.*
+      - lib/*/libboost_iostreams.so.*
+      - lib/*/libboost_program_options.so.*
+      - lib/*/libboost_system.so.*
+      - lib/*/libcurl.so.*
+      - lib/*/libgssapi.so.*
+      - lib/*/libhcrypto.so.*
+      - lib/*/libheimbase.so.*
+      - lib/*/libheimntlm.so.*
+      - lib/*/libhx509.so.*
+      - lib/*/libkrb5.so.*
+      - lib/*/liblber-2.4.so.*
+      - lib/*/libldap_r-2.4.so.*
+      - lib/*/libnghttp2.so.*
+      - lib/*/libpcrecpp.so.*
+      - lib/*/libpsl.so.*
+      - lib/*/libroken.so.*
+      - lib/*/librtmp.so.*
+      - lib/*/libsasl2.so.*
+      - lib/*/libsnappy.so.*
+      - lib/*/libstemmer.so.*
+      - lib/*/libwind.so.*
+      - lib/*/libyaml-cpp.so.*
+
+  mongo:
+    source: https://github.com/mongodb/mongo
+    source-type: git
+    source-tag: "r4.0.5"        # todo: which 4.x tag do we want?
+    plugin: scons
+    after:
+      - mongo-libs
+    scons-options:
+      # Due to gcc7 complaining about cpp17 issues.
+      - "--disable-warnings-as-errors"
+      # Cribbed off mongodb-server deb package
+      - "--use-system-tcmalloc"
+      - "--use-system-pcre"
+      - "--use-system-boost"
+      - "--use-system-snappy"
+      - "--use-system-zlib"
+      - "--use-system-valgrind"
+      - "--use-system-stemmer"
+      - "--use-system-yaml"
+      - "--ssl"
+      - "--allocator=system"
+    build-packages:
+      - libssl-dev
+      - libcurl-dev
+      - libcurl4-openssl-dev
+      # python packages cribbed from deb, might need changed.
+      - python-cheetah
+      - python-pkg-resources
+      - python-pymongo
+      - python-typing
+      - python-yaml
+      # I think these and some of the above will be needed as staging packages too (for when its installed and being run).
+      # - python-requests
+      # - python-subprocess32
+      # Package from deb, note scons arg above.
+      - libstemmer-dev
+      - zlib1g-dev
+      - libsnappy-dev
+      - libyaml-cpp-dev
+      - libpcre3-dev
+      - libboost-iostreams-dev
+      # packages from the mongodb wiki/doc
+      - build-essential
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
+      - libboost-system-dev
+      - libboost-thread-dev
+      # required packages
+      - valgrind
+    
+    override-build: |
+      snapcraftctl build
+      # Strip binaries down to a usable size.
+      for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
+          do strip -s $file;
+      done
+      mv $SNAPCRAFT_PART_BUILD/build/install/bin $SNAPCRAFT_PART_INSTALL/
+    prime:
+      - bin/mongo*
+    stage:
+      - bin/*

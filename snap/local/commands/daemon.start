@@ -1,11 +1,12 @@
-#!/bin/bash
-set -e
+#!/bin/sh
+set -eu
 
 config_path=$(snapctl get configpath)
 
 if [ ! -f "${config_path}" ]; then
-   echo "error: file configpath ${config_path} does not exist."
-   exit 1
+    echo "error: file configpath ${config_path} does not exist."
+    exit 1
 fi
 
 exec "$SNAP/bin/mongod" --config ${config_path}
+
