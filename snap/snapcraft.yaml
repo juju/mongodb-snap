@@ -98,7 +98,6 @@ parts:
   mongo-libs:
     after:
       - mongo-tools
-    source: snap/local/empty
     plugin: nil
     organize:
       usr/lib/: lib/
