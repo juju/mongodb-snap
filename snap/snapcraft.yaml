@@ -9,8 +9,6 @@ base: core18
 
 apps:
   daemon:
-    environment:
-      LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:${SNAP}/lib:${SNAP}/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     command: commands/daemon.start
     stop-timeout: 600s
     restart-condition: on-failure
@@ -19,22 +17,16 @@ apps:
       - network-bind
 
   mongod:
-    environment:
-      LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:${SNAP}/lib:${SNAP}/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     command: mongod
     plugs:
       - network
       
   mongos:
-    environment:
-      LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:${SNAP}/lib:${SNAP}/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     command: mongos
     plugs:
       - network
 
   mongo:
-    environment:
-      LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:${SNAP}/lib:${SNAP}/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     command: mongo
     plugs:
       - network
@@ -80,11 +72,6 @@ parts:
       - libssl1.1
       - libpcap0.8
       - libsasl2-2
-    # organize:
-    #   usr/lib/: lib/
-    prime:
-      # - lib/*/libsasl2.so.*
-      - bin/*
     go-channel: 1.11/stable
     go-importpath: github.com/mongodb/mongo-tools
     override-build: |
@@ -97,66 +84,11 @@ parts:
           mv $GOPATH/bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
       done
 
-  # mongo-libs:
-  #   after:
-  #     - mongo-tools
-  #   plugin: nil
-  #   organize:
-  #     usr/lib/: lib/
-  #   build-packages:
-  #     - libssl-dev
-  #     - libcurl-dev
-  #     - libcurl4-openssl-dev
-  #     - python-cheetah
-  #     - python-pkg-resources
-  #     - python-pymongo
-  #     - python-typing
-  #     - python-yaml
-  #     - libstemmer-dev
-  #     - zlib1g-dev
-  #     - libsnappy-dev
-  #     - libyaml-cpp-dev
-  #     - libpcre3-dev
-  #     - libboost-iostreams-dev
-  #     - build-essential
-  #     - libboost-filesystem-dev
-  #     - libboost-program-options-dev
-  #     - libboost-system-dev
-  #     - libboost-thread-dev
-  #     - valgrind
-  #   # prime:
-  #   #   - lib/*/libasn1.so.*
-  #   #   - lib/*/libboost_filesystem.so.*
-  #   #   - lib/*/libboost_iostreams.so.*
-  #   #   - lib/*/libboost_program_options.so.*
-  #   #   - lib/*/libboost_system.so.*
-  #   #   - lib/*/libcurl.so.*
-  #   #   - lib/*/libgssapi.so.*
-  #   #   - lib/*/libhcrypto.so.*
-  #   #   - lib/*/libheimbase.so.*
-  #   #   - lib/*/libheimntlm.so.*
-  #   #   - lib/*/libhx509.so.*
-  #   #   - lib/*/libkrb5.so.*
-  #   #   - lib/*/liblber-2.4.so.*
-  #   #   - lib/*/libldap_r-2.4.so.*
-  #   #   - lib/*/libnghttp2.so.*
-  #   #   - lib/*/libpcrecpp.so.*
-  #   #   - lib/*/libpsl.so.*
-  #   #   - lib/*/libroken.so.*
-  #   #   - lib/*/librtmp.so.*
-  #   #   - lib/*/libsasl2.so.*
-  #   #   - lib/*/libsnappy.so.*
-  #   #   - lib/*/libstemmer.so.*
-  #   #   - lib/*/libwind.so.*
-  #   #   - lib/*/libyaml-cpp.so.*
-
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
     source-tag: "r4.0.5"
     plugin: scons
-    # after:
-    #   - mongo-libs
     scons-options:
       # Due to gcc7 complaining about cpp17 issues.
       - "--disable-warnings-as-errors"
@@ -179,6 +111,11 @@ parts:
       - libsnappy1v5
       - libyaml-cpp0.5v5
       - libpcre3
+      - libpcrecpp0v5
+      - libboost-system1.65.1
+      - libboost-iostreams1.65.1
+      - libboost-filesystem1.65.1
+      - libboost-program-options1.65.1
     build-packages:
       - libssl-dev
       - libcurl-dev
@@ -215,7 +152,3 @@ parts:
           do strip -s $file;
       done
       mv $SNAPCRAFT_PART_BUILD/build/install/bin $SNAPCRAFT_PART_INSTALL/
-    prime:
-      - bin/mongo*
-    stage:
-      - bin/*
