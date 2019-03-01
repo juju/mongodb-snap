@@ -118,7 +118,6 @@ parts:
       - libboost-program-options1.65.1
     build-packages:
       - libssl-dev
-      - libcurl-dev
       - libcurl4-openssl-dev
       # python packages cribbed from deb, might need changed.
       - python-cheetah
