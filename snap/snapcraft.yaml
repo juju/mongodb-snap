@@ -1,5 +1,5 @@
 name: juju-db
-version: '4.0.5'
+version: '4.0.9'
 summary: Mongodb object/document oriented database used internally by Juju.
 description: |
   Mongodb object/document oriented database used internally by Juju.
@@ -60,7 +60,7 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "r4.0.5"
+    source-tag: "r4.0.9"
     plugin: go
     build-packages:
       - gcc
@@ -87,22 +87,8 @@ parts:
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.0.5"
+    source-tag: "r4.0.9"
     plugin: scons
-    scons-options:
-      # Due to gcc7 complaining about cpp17 issues.
-      - "--disable-warnings-as-errors"
-      # Cribbed off mongodb-server deb package
-      - "--use-system-tcmalloc"
-      - "--use-system-pcre"
-      - "--use-system-boost"
-      - "--use-system-snappy"
-      - "--use-system-zlib"
-      - "--use-system-valgrind"
-      - "--use-system-stemmer"
-      - "--use-system-yaml"
-      - "--ssl"
-      - "--allocator=system"
     stage-packages:
       - libssl1.1
       - libcurl4
@@ -116,7 +102,11 @@ parts:
       - libboost-iostreams1.65.1
       - libboost-filesystem1.65.1
       - libboost-program-options1.65.1
+      - libgoogle-perftools4
     build-packages:
+      # isn't available on s390x, only needed on the rest anyway.
+      - try:
+          - libgoogle-perftools-dev
       - libssl-dev
       - libcurl4-openssl-dev
       # python packages cribbed from deb, might need changed.
@@ -145,7 +135,28 @@ parts:
       - valgrind
     
     override-build: |
-      snapcraftctl build
+      # don't care: --server-js=off
+      # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
+      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre --use-system-snappy --use-system-boost --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
+      arch=$(uname -m)
+      if [ $arch = "aarch64" ]; then
+          ccflags_arg="CCFLAGS=-march=armv8-a+crc"
+      
+      else
+          ccflags_arg=""
+      fi
+
+      if [ $arch = "s390x" ]; then
+          SCONSFLAGS="$SCONSFLAGS --allocator=system"
+      else
+          SCONSFLAGS="$SCONSFLAGS --allocator=tcmalloc"
+      fi
+      export SCONSFLAGS
+      export DESTDIR=$SNAPCRAFT_PART_INSTALL
+
+      scons $ccflags_arg
+      scons install $ccflags_arg
+
       # Strip binaries down to a usable size.
       for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
           do strip -s $file;
