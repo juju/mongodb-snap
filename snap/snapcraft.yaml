@@ -4,7 +4,7 @@ summary: Mongodb object/document oriented database used internally by Juju.
 description: |
   Mongodb object/document oriented database used internally by Juju.
 confinement: strict
-grade: devel
+grade: stable
 base: core18 
 
 apps:
