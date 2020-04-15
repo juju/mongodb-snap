@@ -1,11 +1,12 @@
 name: juju-db
-version: '4.0.9'
-summary: Mongodb object/document oriented database used internally by Juju.
+version: '4.0.18'
+summary: MongoDB object/document oriented database used internally by Juju.
 description: |
-  Mongodb object/document oriented database used internally by Juju.
+  MongoDB object/document oriented database used internally by Juju.
 confinement: strict
 grade: stable
-base: core18 
+base: core18
+license: AGPL-3.0
 
 apps:
   daemon:
@@ -60,7 +61,7 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "r4.0.9"
+    source-tag: "r4.0.18"
     plugin: go
     build-packages:
       - gcc
@@ -77,17 +78,18 @@ parts:
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
       export GOPATH=$(realpath ../go)
+      src_dir=$GOPATH/src/github.com/mongodb/mongo-tools
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
-      # TODO: maybe set ldflags as per the build script.
+      . $src_dir/set_goenv.sh
       for tool in ${mongo_tools}; do
-          go build -v -tags="ssl sasl" -o $GOPATH/bin/$tool github.com/mongodb/mongo-tools/$tool/main
+          go build -v $(buildflags) -ldflags "$(print_ldflags)" -tags="ssl sasl" -o $GOPATH/bin/$tool github.com/mongodb/mongo-tools/$tool/main
           mv $GOPATH/bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
       done
 
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.0.9"
+    source-tag: "r4.0.18"
     plugin: scons
     stage-packages:
       - libssl1.1
@@ -141,7 +143,6 @@ parts:
       arch=$(uname -m)
       if [ $arch = "aarch64" ]; then
           ccflags_arg="CCFLAGS=-march=armv8-a+crc"
-      
       else
           ccflags_arg=""
       fi
