@@ -21,11 +21,13 @@ apps:
     command: mongod
     plugs:
       - network
+      - network-bind
       
   mongos:
     command: mongos
     plugs:
       - network
+      - network-bind
 
   mongo:
     command: mongo
