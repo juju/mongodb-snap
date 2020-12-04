@@ -56,17 +56,13 @@ apps:
       - network
 
 parts:
-  wrappers:
-    plugin: dump
-    source: snap/local/
-
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
     source-tag: "r4.2.11"
     plugin: go
     build-packages:
-      - gcc
+      - gcc-8
       - pkg-config
       - libssl-dev
       - libpcap0.8-dev
@@ -75,7 +71,7 @@ parts:
       - libssl1.1
       - libpcap0.8
       - libsasl2-2
-    go-channel: 1.11/stable
+    go-channel: 1.15/stable
     go-importpath: github.com/mongodb/mongo-tools
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
@@ -114,11 +110,12 @@ parts:
       - libssl-dev
       - libcurl4-openssl-dev
       # python packages cribbed from deb, might need changed.
-      - python-cheetah
-      - python-pkg-resources
-      - python-pymongo
       - python-typing
-      - python-yaml
+      - python3-pip
+      - python3-pkg-resources
+      - python3-pymongo
+      - python3-yaml
+      - python3-psutil
       # I think these and some of the above will be needed as staging packages too (for when its installed and being run).
       # - python-requests
       # - python-subprocess32
@@ -131,6 +128,8 @@ parts:
       - libboost-iostreams-dev
       # packages from the mongodb wiki/doc
       - build-essential
+      - g++-8
+      - libboost-log-dev
       - libboost-filesystem-dev
       - libboost-program-options-dev
       - libboost-system-dev
@@ -139,9 +138,13 @@ parts:
       - valgrind
     
     override-build: |
+      update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+      pip3 install setuptools
+      pip3 install cheetah3
+
       # don't care: --server-js=off
       # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
-      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre --use-system-snappy --use-system-boost --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
+      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre --use-system-snappy --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
       arch=$(uname -m)
       if [ $arch = "aarch64" ]; then
           ccflags_arg="CCFLAGS=-march=armv8-a+crc"
@@ -157,8 +160,9 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
-      scons $ccflags_arg
-      scons install $ccflags_arg
+      update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+      python3 buildscripts/scons.py $ccflags_arg
+      python3 buildscripts/scons.py install $ccflags_arg
 
       # Strip binaries down to a usable size.
       for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
