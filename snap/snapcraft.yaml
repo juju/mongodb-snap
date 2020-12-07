@@ -168,8 +168,7 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
-      python3 buildscripts/scons.py $ccflags_arg
-      python3 buildscripts/scons.py install $ccflags_arg
+      python3 buildscripts/scons.py install-core $ccflags_arg
 
       # Strip binaries down to a usable size.
       for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
