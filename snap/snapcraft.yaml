@@ -88,10 +88,8 @@ parts:
       go get -d github.com/mongodb/mongo-tools-common/...
       go get -d $src_dir/...
       . $src_dir/set_goenv.sh
-      ldflags=$(print_ldflags)
-      ldflags=$(ldflags) + " -s -w"
       for tool in ${mongo_tools}; do
-          go build -v $(buildflags) -ldflags "$(print_ldflags)" -tags="ssl sasl" -o ${SNAPCRAFT_PART_INSTALL}/bin/$tool ./$tool/main
+          go build -v $(buildflags) -ldflags "-s -w $(print_ldflags)" -tags="ssl sasl" -o ${SNAPCRAFT_PART_INSTALL}/bin/$tool ./$tool/main
       done
 
   mongo:
