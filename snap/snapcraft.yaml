@@ -5,7 +5,7 @@ description: |
   MongoDB object/document oriented database used internally by Juju.
 confinement: strict
 grade: stable
-base: core18
+base: core20
 license: AGPL-3.0
 
 apps:
@@ -56,13 +56,18 @@ apps:
       - network
 
 parts:
+  wrappers:
+    plugin: dump
+    source: snap/local/
+    source-type: local
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
     source-tag: "r4.2.11"
     plugin: go
     build-packages:
-      - gcc-8
+      - libpopt0
+      - rsync
       - pkg-config
       - libssl-dev
       - libpcap0.8-dev
@@ -72,36 +77,41 @@ parts:
       - libpcap0.8
       - libsasl2-2
     go-channel: 1.15/stable
-    go-importpath: github.com/mongodb/mongo-tools
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
-      export GOPATH=$(realpath ../go)
+      export GOPATH=$(realpath ../)
       src_dir=$GOPATH/src/github.com/mongodb/mongo-tools
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
+      mkdir -p $src_dir
+      rsync -r --remove-source-files --exclude=github.com ../src/* $src_dir
+      cd $src_dir
+      go get -d github.com/mongodb/mongo-tools-common/...
+      go get -d $src_dir/...
       . $src_dir/set_goenv.sh
+      ldflags=$(print_ldflags)
+      ldflags=$(ldflags) + " -s -w"
       for tool in ${mongo_tools}; do
-          go build -v $(buildflags) -ldflags "$(print_ldflags)" -tags="ssl sasl" -o $GOPATH/bin/$tool github.com/mongodb/mongo-tools/$tool/main
-          mv $GOPATH/bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
+          go build -v $(buildflags) -ldflags "$(print_ldflags)" -tags="ssl sasl" -o ${SNAPCRAFT_PART_INSTALL}/bin/$tool ./$tool/main
       done
 
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
     source-tag: "r4.4.2"
-    plugin: scons
+    plugin: nil
     stage-packages:
       - libssl1.1
       - libcurl4
       - libstemmer0d
       - zlib1g
       - libsnappy1v5
-      - libyaml-cpp0.5v5
+      - libyaml-cpp0.6
       - libpcre3
       - libpcrecpp0v5
-      - libboost-system1.65.1
-      - libboost-iostreams1.65.1
-      - libboost-filesystem1.65.1
-      - libboost-program-options1.65.1
+      - libboost-system-dev
+      - libboost-iostreams-dev
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
       - libgoogle-perftools4
     build-packages:
       # isn't available on s390x, only needed on the rest anyway.
@@ -111,6 +121,7 @@ parts:
       - libcurl4-openssl-dev
       # python packages cribbed from deb, might need changed.
       - python-typing
+      - python3-cheetah
       - python3-pip
       - python3-pkg-resources
       - python3-pymongo
@@ -128,7 +139,6 @@ parts:
       - libboost-iostreams-dev
       # packages from the mongodb wiki/doc
       - build-essential
-      - g++-8
       - libboost-log-dev
       - libboost-filesystem-dev
       - libboost-program-options-dev
@@ -136,11 +146,9 @@ parts:
       - libboost-thread-dev
       # required packages
       - valgrind
-    
+
     override-build: |
       update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-      pip3 install setuptools
-      pip3 install cheetah3
 
       # don't care: --server-js=off
       # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
@@ -160,7 +168,6 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
-      update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
       python3 buildscripts/scons.py $ccflags_arg
       python3 buildscripts/scons.py install $ccflags_arg
 
