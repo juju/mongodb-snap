@@ -66,30 +66,29 @@ parts:
     source-tag: "r4.2.11"
     plugin: go
     build-packages:
-      - libpopt0
-      - rsync
       - pkg-config
       - libssl-dev
       - libpcap0.8-dev
       - libsasl2-dev
+      - libkrb5-dev
     stage-packages:
       - libssl1.1
       - libpcap0.8
       - libsasl2-2
     go-channel: 1.15/stable
     override-build: |
-      mongo_tools="mongodump mongorestore mongotop mongostat"
-      export GOPATH=$(realpath ../)
-      src_dir=$GOPATH/src/github.com/mongodb/mongo-tools
-      mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
+      export GOPATH=$(realpath ../go)
+      src_dir=$GOPATH/src/github.com/mongodb
       mkdir -p $src_dir
-      rsync -r --remove-source-files --exclude=github.com ../src/* $src_dir
       cd $src_dir
-      go get -d github.com/mongodb/mongo-tools-common/...
-      go get -d $src_dir/...
-      . $src_dir/set_goenv.sh
+      git clone --depth 1 https://github.com/mongodb/mongo-tools
+      cd mongo-tools
+      ./make build
+      mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
+      mongo_tools="mongodump mongorestore mongotop mongostat"
       for tool in ${mongo_tools}; do
-          go build -v $(buildflags) -ldflags "-s -w $(print_ldflags)" -tags="ssl sasl" -o ${SNAPCRAFT_PART_INSTALL}/bin/$tool ./$tool/main
+          strip -s bin/$tool
+          mv bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
       done
 
   mongo:
