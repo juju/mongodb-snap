@@ -18,40 +18,40 @@ apps:
       - network-bind
 
   mongod:
-    command: mongod
+    command: bin/mongod
     plugs:
       - network
       - network-bind
       
   mongos:
-    command: mongos
+    command: bin/mongos
     plugs:
       - network
       - network-bind
 
   mongo:
-    command: mongo
+    command: bin/mongo
     plugs:
       - network
 
   # Tools
   mongodump:
-    command: mongodump
+    command: bin/mongodump
     plugs:
       - network
 
   mongorestore:
-    command: mongorestore
+    command: bin/mongorestore
     plugs:
       - network
 
   mongostat:
-    command: mongostat
+    command: bin/mongostat
     plugs:
       - network
 
   mongotop:
-    command: mongotop
+    command: bin/mongotop
     plugs:
       - network
 
