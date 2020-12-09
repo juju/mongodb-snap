@@ -23,12 +23,6 @@ apps:
       - network
       - network-bind
       
-  mongos:
-    command: bin/mongos
-    plugs:
-      - network
-      - network-bind
-
   mongo:
     command: bin/mongo
     plugs:
@@ -165,7 +159,7 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
-      python3 buildscripts/scons.py install-core $ccflags_arg
+      python3 buildscripts/scons.py install-mongo install-mongod $ccflags_arg
 
       # Strip binaries down to a usable size.
       for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
