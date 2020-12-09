@@ -6,7 +6,7 @@ description: |
 confinement: strict
 grade: stable
 base: core20
-license: SSPL-1.0
+license: AGPL-3.0
 
 apps:
   daemon:
