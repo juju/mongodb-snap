@@ -1,5 +1,5 @@
 name: juju-db
-version: '4.4.2'
+version: '4.4.3'
 summary: MongoDB object/document oriented database used internally by Juju.
 description: |
   MongoDB object/document oriented database used internally by Juju.
@@ -22,7 +22,7 @@ apps:
     plugs:
       - network
       - network-bind
-      
+
   mongo:
     command: bin/mongo
     plugs:
@@ -57,7 +57,7 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "r4.2.11"
+    source-tag: "r4.2.12"
     plugin: go
     build-packages:
       - pkg-config
@@ -71,16 +71,22 @@ parts:
       - libsasl2-2
     go-channel: 1.15/stable
     override-build: |
-      export GOPATH=$(realpath ../go)
-      src_dir=$GOPATH/src/github.com/mongodb
-      mkdir -p $src_dir
-      cd $src_dir
-      git clone https://github.com/mongodb/mongo-tools
-      cd mongo-tools
-      ./make build
+      export GOROOT=/snap/go/current
+      export GOPATH=$(realpath ..)
+      # core20 go plugin only supports go.mod.
+      # mongo-tools uses go dep so convert to go.mod first.
+      # Clean checkout won't have go.mod but interrupted builds will.
+      rm -rf go.mod go.sum
+      go mod init github.com/mongodb/mongo-tools
+      # Remove a bogus replace with a non-existent revision.
+      sed -r -i "s/replace ([^\s]*) ([0-9a-f]*?) => (.*)/replace \1 => \3/" ./go.mod
+      rm -rf vendor
+      . ./set_goenv.sh
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       mongo_tools="mongodump mongorestore mongotop mongostat"
       for tool in ${mongo_tools}; do
+          echo "Building ${tool}..."
+          go build -o "bin/$tool" $(buildflags) -ldflags "$(print_ldflags)" -tags "$(print_tags $tags)" "$tool/main/$tool.go"
           strip -s bin/$tool
           mv bin/$tool ${SNAPCRAFT_PART_INSTALL}/bin/
       done
@@ -88,7 +94,7 @@ parts:
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.4.2"
+    source-tag: "r4.4.3"
     plugin: nil
     stage-packages:
       - libssl1.1
