@@ -92,6 +92,7 @@ parts:
       done
 
   mongo:
+    after: [mongo-tools]
     source: https://github.com/mongodb/mongo
     source-type: git
     source-tag: "r4.4.3"
