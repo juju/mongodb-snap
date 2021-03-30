@@ -82,6 +82,7 @@ parts:
       sed -r -i "s/replace ([^\s]*) ([0-9a-f]*?) => (.*)/replace \1 => \3/" ./go.mod
       rm -rf vendor
       . ./set_goenv.sh
+      go mod download
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       mongo_tools="mongodump mongorestore mongotop mongostat"
       for tool in ${mongo_tools}; do
