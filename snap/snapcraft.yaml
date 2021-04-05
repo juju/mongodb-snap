@@ -1,5 +1,5 @@
 name: juju-db
-version: '4.0.18'
+version: '4.0.23'
 summary: MongoDB object/document oriented database used internally by Juju.
 description: |
   MongoDB object/document oriented database used internally by Juju.
@@ -63,7 +63,7 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "r4.0.18"
+    source-tag: "r4.0.23"
     plugin: go
     build-packages:
       - gcc
@@ -75,7 +75,7 @@ parts:
       - libssl1.1
       - libpcap0.8
       - libsasl2-2
-    go-channel: 1.11/stable
+    go-channel: 1.16/stable
     go-importpath: github.com/mongodb/mongo-tools
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
@@ -91,7 +91,7 @@ parts:
   mongo:
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.0.18"
+    source-tag: "r4.0.23"
     plugin: scons
     stage-packages:
       - libssl1.1
