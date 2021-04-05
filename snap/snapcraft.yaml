@@ -80,6 +80,7 @@ parts:
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
       export GOPATH=$(realpath ../go)
+      export GO111MODULE=off
       src_dir=$GOPATH/src/github.com/mongodb/mongo-tools
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       . $src_dir/set_goenv.sh
