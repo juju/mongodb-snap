@@ -22,12 +22,6 @@ apps:
     plugs:
       - network
       - network-bind
-      
-  mongos:
-    command: mongos
-    plugs:
-      - network
-      - network-bind
 
   mongo:
     command: mongo
@@ -75,12 +69,11 @@ parts:
       - libssl1.1
       - libpcap0.8
       - libsasl2-2
-    go-channel: 1.16/stable
+    go-channel: 1.11/stable
     go-importpath: github.com/mongodb/mongo-tools
     override-build: |
       mongo_tools="mongodump mongorestore mongotop mongostat"
       export GOPATH=$(realpath ../go)
-      export GO111MODULE=off
       src_dir=$GOPATH/src/github.com/mongodb/mongo-tools
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       . $src_dir/set_goenv.sh
@@ -90,6 +83,7 @@ parts:
       done
 
   mongo:
+    after: [mongo-tools]
     source: https://github.com/mongodb/mongo
     source-type: git
     source-tag: "r4.0.23"
@@ -138,7 +132,7 @@ parts:
       - libboost-thread-dev
       # required packages
       - valgrind
-    
+
     override-build: |
       # don't care: --server-js=off
       # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
