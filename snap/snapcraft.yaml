@@ -1,5 +1,5 @@
 name: juju-db
-version: '4.4.5'
+version: '5.0.1'
 summary: MongoDB object/document oriented database used internally by Juju.
 description: |
   MongoDB object/document oriented database used internally by Juju.
@@ -57,7 +57,7 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "100.3.0"
+    source-tag: "100.4.0"
     plugin: go
     build-packages:
       - pkg-config
@@ -73,15 +73,6 @@ parts:
     override-build: |
       export GOROOT=/snap/go/current
       export GOPATH=$(realpath ..)
-      # core20 go plugin only supports go.mod.
-      # mongo-tools uses go dep so convert to go.mod first.
-      # Clean checkout won't have go.mod but interrupted builds will.
-      rm -rf go.mod go.sum
-      go mod init github.com/mongodb/mongo-tools
-      # Remove a bogus replace with a non-existent revision.
-      sed -r -i "s/replace ([^\s]*) ([0-9a-f]*?) => (.*)/replace \1 => \3/" ./go.mod
-      rm -rf vendor
-      go mod download
       ./make build
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       mongo_tools="mongodump mongorestore mongotop mongostat"
@@ -95,7 +86,7 @@ parts:
     after: [mongo-tools]
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.4.5"
+    source-tag: "r5.0.1"
     plugin: nil
     stage-packages:
       - libssl1.1
@@ -166,6 +157,8 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
+      python3 -m pip install requirements_parser
+      python3 -m pip install -r etc/pip/compile-requirements.txt
       python3 buildscripts/scons.py install-mongo install-mongod $ccflags_arg
 
       # Strip binaries down to a usable size.
