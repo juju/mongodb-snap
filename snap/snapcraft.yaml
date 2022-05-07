@@ -92,7 +92,7 @@ parts:
     after: [mongo-tools]
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r5.0.5"
+    source-tag: "r5.0.8"
     plugin: nil
     stage-packages:
       - libssl1.1
