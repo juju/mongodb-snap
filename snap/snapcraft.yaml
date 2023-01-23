@@ -39,11 +39,13 @@ apps:
     command: bin/mongodump
     plugs:
       - network
+      - home
 
   mongorestore:
     command: bin/mongorestore
     plugs:
       - network
+      - home
 
   mongostat:
     command: bin/mongostat
