@@ -20,6 +20,12 @@ apps:
       - system-observe
       - mount-observe
 
+  logrotate:
+    command: usr/sbin/logrotate --verbose --state $SNAP_COMMON/logrotate.state $SNAP/etc/logrotate-juju-db.conf
+    daemon: simple
+    restart-condition: on-failure
+    timer: 00:00
+
   mongod:
     command: bin/mongod
     plugs:
@@ -62,6 +68,7 @@ parts:
     plugin: dump
     source: snap/local/
     source-type: local
+
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
@@ -173,3 +180,11 @@ parts:
           do strip -s $file;
       done
       mv $SNAPCRAFT_PART_BUILD/build/install/bin $SNAPCRAFT_PART_INSTALL/
+
+  logrotate:
+    plugin: dump
+    source: logrotate
+    stage-packages:
+      - logrotate
+    organize:
+      juju-db.conf: etc/logrotate-juju-db.conf
