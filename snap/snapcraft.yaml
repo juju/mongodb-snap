@@ -184,7 +184,9 @@ parts:
   logrotate:
     plugin: dump
     source: logrotate
+    source-type: local
     stage-packages:
       - logrotate
-    organize:
-      juju-db.conf: etc/logrotate-juju-db.conf
+    override-build: |
+      snapcraftctl build
+      install --mode 0644 juju-db.conf ${SNAPCRAFT_PART_INSTALL}/etc/logrotate-juju-db.conf
