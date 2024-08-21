@@ -150,6 +150,7 @@ parts:
       - build-essential
       # required packages
       - valgrind
+      - rust-all
 
     override-build: |
       # We need to use Python 3.11 to build.
