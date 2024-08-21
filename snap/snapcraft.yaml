@@ -118,11 +118,11 @@ parts:
       - libsnappy1v5
       - libyaml-cpp0.8
       - to amd64:
-        - libtcmalloc-minimal4t64
+        - libgoogle-perftools4t64
       - to arm64:
-        - libtcmalloc-minimal4t64
+        - libgoogle-perftools4t64
       - to ppc64el:
-        - libtcmalloc-minimal4t64
+        - libgoogle-perftools4t64
     build-packages:
       # isn't available on s390x, only needed on the rest anyway.
       - to amd64:
