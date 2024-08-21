@@ -117,27 +117,26 @@ parts:
       - zlib1g
       - libsnappy1v5
       - libyaml-cpp0.8
-      - libpcre3
-      - libpcrecpp0v5
-      - libboost-system1.74.0
-      - libboost-iostreams1.74.0
-      - libboost-filesystem1.74.0
-      - libboost-program-options1.74.0
-      - libgoogle-perftools4
+      - to amd64:
+        - libtcmalloc-minimal4t64
+      - to arm64:
+        - libtcmalloc-minimal4t64
+      - to ppc64el:
+        - libtcmalloc-minimal4t64
     build-packages:
       # isn't available on s390x, only needed on the rest anyway.
-      - to amd64,arm64,ppc64el:
-          - libgoogle-perftools-dev
+      - to amd64:
+        - libgoogle-perftools-dev
+      - to arm64:
+        - libgoogle-perftools-dev
+      - to ppc64el:
+        - libgoogle-perftools-dev
       - libssl-dev
       - liblzma-dev
       - libcurl4-openssl-dev
-      - python-dev-is-python3
-      - python3-cheetah
-      - python3-pip
-      - python3-pkg-resources
-      - python3-pymongo
-      - python3-yaml
-      - python3-psutil
+      - python3.11
+      - python3.11-venv
+      - python3.11-dev
       # I think these and some of the above will be needed as staging packages too (for when its installed and being run).
       # - python-requests
       # - python-subprocess32
@@ -146,37 +145,29 @@ parts:
       - zlib1g-dev
       - libsnappy-dev
       - libyaml-cpp-dev
-      - libpcre3-dev
-      - libboost-iostreams-dev
+      - libpcre2-dev
       # packages from the mongodb wiki/doc
       - build-essential
-      - libboost-log-dev
-      - libboost-filesystem-dev
-      - libboost-program-options-dev
-      - libboost-system-dev
-      - libboost-thread-dev
       # required packages
       - valgrind
 
     override-build: |
       # We need to use Python 3.11 to build.
-      apt install -y software-properties-common
-      add-apt-repository -y ppa:deadsnakes/ppa
-      apt install -y python3.11 python3.11-venv python3.11-dev
-      ln -sf /usr/bin/python3.11 /usr/bin/python3
-
-      python3 -m venv _build --prompt mongo
+      python3.11 -m venv _build --prompt mongo
       source _build/bin/activate
-      pip install --upgrade pip
+      python3 -m pip install --upgrade pip
+
+      python3 -m pip install distlib
       # Later mongo source has a build script for poetry.
       # But for 7.x we need to do it manually.
-      python3 -m pip install 'poetry==1.5.1'
+      python3 -m pip install poetry
       export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+      python3 -m poetry update poetry pyproject-hooks distlib virtualenv packaging cryptography pkgutil
       python3 -m poetry install --no-root --sync
 
       # don't care: --server-js=off
       # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
-      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre2 --use-system-snappy --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
+      SCONSFLAGS="--disable-warnings-as-errors --use-system-pcre2 --use-system-snappy --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
       arch=$(uname -m)
       if [ $arch = "aarch64" ]; then
           ccflags_arg="CCFLAGS=-march=armv8-a+crc"
@@ -187,7 +178,7 @@ parts:
       if [ $arch = "s390x" ]; then
           SCONSFLAGS="$SCONSFLAGS --allocator=system"
       else
-          SCONSFLAGS="$SCONSFLAGS --allocator=tcmalloc"
+          SCONSFLAGS="$SCONSFLAGS --use-system-tcmalloc --allocator=tcmalloc"
       fi
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
@@ -209,3 +200,7 @@ parts:
     override-build: |
       snapcraftctl build
       install --mode 0644 juju-db.conf ${SNAPCRAFT_PART_INSTALL}/etc/logrotate-juju-db.conf
+
+package-repositories:
+  - type: apt
+    ppa: deadsnakes/ppa
