@@ -1,11 +1,11 @@
 name: juju-db
-version: '4.4.24'
+version: '7.3.4'
 summary: MongoDB object/document oriented database used internally by Juju.
 description: |
   MongoDB object/document oriented database used internally by Juju.
 confinement: strict
 grade: stable
-base: core20
+base: core24
 license: SSPL-1.0
 
 apps:
@@ -72,8 +72,10 @@ parts:
   mongo-tools:
     source: https://github.com/mongodb/mongo-tools
     source-type: git
-    source-tag: "100.6.1"
-    plugin: go
+    source-tag: "100.10.0"
+    plugin: nil
+    build-snaps:
+      - go
     build-packages:
       - pkg-config
       - libssl-dev
@@ -81,13 +83,18 @@ parts:
       - libsasl2-dev
       - libkrb5-dev
     stage-packages:
-      - libssl1.1
+      - libssl3
       - libpcap0.8
       - libsasl2-2
-    go-channel: 1.19/stable
     override-build: |
       export GOROOT=/snap/go/current
       export GOPATH=$(realpath ..)
+      # mongo tools hard codes the build platform to bionic
+      # and panics if built on anything else :-(
+      # Tricking it into thinking it's running in CI
+      # forces it to look at an env var for the platform.
+      export CI=anything
+      export EVG_VARIANT=ubuntu2404
       ./make build
       mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin/
       mongo_tools="mongodump mongorestore mongotop mongostat"
@@ -101,31 +108,30 @@ parts:
     after: [mongo-tools]
     source: https://github.com/mongodb/mongo
     source-type: git
-    source-tag: "r4.4.24"
+    source-tag: "r7.3.4"
     plugin: nil
     stage-packages:
-      - libssl1.1
+      - libssl3
       - libcurl4
       - libstemmer0d
       - zlib1g
       - libsnappy1v5
-      - libyaml-cpp0.6
+      - libyaml-cpp0.8
       - libpcre3
       - libpcrecpp0v5
-      - libboost-system1.71.0
-      - libboost-iostreams1.71.0
-      - libboost-filesystem1.71.0
-      - libboost-program-options1.71.0
+      - libboost-system1.74.0
+      - libboost-iostreams1.74.0
+      - libboost-filesystem1.74.0
+      - libboost-program-options1.74.0
       - libgoogle-perftools4
     build-packages:
       # isn't available on s390x, only needed on the rest anyway.
-      - try:
+      - to amd64,arm64,ppc64el:
           - libgoogle-perftools-dev
       - libssl-dev
       - liblzma-dev
       - libcurl4-openssl-dev
-      # python packages cribbed from deb, might need changed.
-      - python-typing
+      - python-dev-is-python3
       - python3-cheetah
       - python3-pip
       - python3-pkg-resources
@@ -153,11 +159,24 @@ parts:
       - valgrind
 
     override-build: |
-      update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+      # We need to use Python 3.11 to build.
+      apt install -y software-properties-common
+      add-apt-repository -y ppa:deadsnakes/ppa
+      apt install -y python3.11 python3.11-venv python3.11-dev
+      ln -sf /usr/bin/python3.11 /usr/bin/python3
+
+      python3 -m venv _build --prompt mongo
+      source _build/bin/activate
+      pip install --upgrade pip
+      # Later mongo source has a build script for poetry.
+      # But for 7.x we need to do it manually.
+      python3 -m pip install 'poetry==1.5.1'
+      export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+      python3 -m poetry install --no-root --sync
 
       # don't care: --server-js=off
       # Use system tcmalloc as it's more 'trusted' and would be updated by kernel/security team.
-      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre --use-system-snappy --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
+      SCONSFLAGS="--use-system-tcmalloc --disable-warnings-as-errors --use-system-pcre2 --use-system-snappy --use-system-zlib --use-system-valgrind --use-system-stemmer --use-system-yaml --ssl"
       arch=$(uname -m)
       if [ $arch = "aarch64" ]; then
           ccflags_arg="CCFLAGS=-march=armv8-a+crc"
@@ -173,7 +192,7 @@ parts:
       export SCONSFLAGS
       export DESTDIR=$SNAPCRAFT_PART_INSTALL
 
-      python3 buildscripts/scons.py install-mongo install-mongod $ccflags_arg
+      python3 buildscripts/scons.py install-mongo install-mongod --linker=gold $ccflags_arg
 
       # Strip binaries down to a usable size.
       for file in $SNAPCRAFT_PART_BUILD/build/install/bin/mongo*;
